@@ -1,0 +1,40 @@
+# Publishes https://picorubykaigi.org/adventure-board/
+#
+# What is published is built in picorubykaigi/adventure-board-firmware
+# (.github/workflows/build-guide.yml there); this repository only deploys it.
+# Started by hand: Actions -> deploy -> Run workflow.
+name: deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'adventure-board-firmware のブランチ・タグ・コミット'
+        type: string
+        default: main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    uses: picorubykaigi/adventure-board-firmware/.github/workflows/build-guide.yml@main
+    with:
+      ref: ${{ inputs.ref }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
